@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lane Detection Paper Notes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f6f7fb;
+      color: #111827;
+    }
+
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    header {
+      margin-bottom: 24px;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 12px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.8rem;
+    }
+
+    header p {
+      margin: 4px 0 0;
+      color: #4b5563;
+      font-size: 0.95rem;
+    }
+
+    h2 {
+      margin-top: 32px;
+      margin-bottom: 12px;
+      font-size: 1.3rem;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 4px;
+    }
+
+    .paper-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .paper-card {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 16px 18px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    }
+
+    .paper-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .paper-meta {
+      font-size: 0.88rem;
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+
+    .paper-meta span + span::before {
+      content: "•";
+      margin: 0 6px;
+    }
+
+    .paper-link a {
+      font-size: 0.88rem;
+      text-decoration: none;
+      color: #2563eb;
+    }
+
+    .paper-link a:hover {
+      text-decoration: underline;
+    }
+    .paper-figure {
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    .paper-figure img {
+      width: 60%;
+      height: auto;
+    }
+    .paper-figure .caption {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-top: 6px;
+    }
+    .paper-summary p {
+      margin: 6px 0;
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .assumptions {
+      margin-top: 10px;
+      font-size: 0.92rem;
+    }
+    .assumptions p.label {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .assumptions ol {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .assumptions li {
+      margin-bottom: 4px;
+      line-height: 1.5;
+    }
+
+    /* Table section */
+    .table-wrapper {
+      margin-top: 16px;
+      overflow-x: auto;
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      border: 1px solid #e5e7eb;
+      padding: 6px 8px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #f3f4f6;
+      font-weight: 600;
+    }
+
+    td:first-child,
+    th:first-child {
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .check {
+      font-size: 1rem;
+    }
+
+    .check::before {
+      content: "✓";
+      color: #16a34a;
+      font-weight: 600;
+    }
+
+    .empty {
+      color: #d1d5db;
+    }
+
+    footer {
+      margin-top: 32px;
+      font-size: 0.8rem;
+      color: #9ca3af;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 1.4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>Lane Detection Paper Notes</h1>
+      <p>Summaries and feature/assumption comparison of lane detection methods, classified into 5 categories: (1) Segmentation-based (2) Anchor/row-wise-based (3) Parametric/curve-based (4) Keypoint-based (5) Transformer-based.</p>
+    </header>
+
+    <!-- PAPERS SECTION -->
+    <section>
+      <h2>Papers</h2>
+      <div class="paper-list">
+
+        <article class="paper-card">
+          <div class="paper-title">
+            [1] Spatial As Deep: Spatial CNN for Traffic Scene Understanding (SCNN)
+          </div>
+          <div class="paper-meta">
+            <span>AAAI 2018</span>
+            <span>Category: Segmentation-based</span>
+          </div>
+          <div class="paper-link">
+            <a href="https://arxiv.org/abs/1712.06080" target="_blank" rel="noopener noreferrer">
+              Paper link
+            </a>
+          </div>
+          <div class="paper-summary">
+            <p>
+              Standard CNNs build receptive field only by stacking layers, so information between two spatially distant
+              but related pixels (e.g. a lane occluded by a car in the middle) only mixes indirectly, many layers later,
+              once receptive fields happen to overlap. This is a poor fit for lane markings, which have a long, thin,
+              continuous shape but weak/occluded appearance cues. Prior fixes for propagating context within a layer
+              (RNNs scanning rows/columns, MRF/CRF with dense pairwise connections) either only mix in one direction, or
+              connect every pixel to every other pixel directly, which is computationally very expensive.
+            </p>
+            <p>
+              SCNN instead slices a feature map into rows (or columns) and propagates information sequentially: convolve
+              a row (1D conv sliding along width) to produce a message, add that message residually to the next row,
+              convolve the updated row to produce the next message, and so on, which is done in 4 passes (down, up, right, left)
+              applied sequentially, one after another. This is inserted after the last hidden layer of a VGG16/LargeFOV
+              segmentation backbone, followed by a 1x1 conv to map to per-pixel class scores (background + fixed number
+              of lane slots), upsampling, and softmax to get the final per-pixel lane segmentation mask.
+            </p>
+          </div>
+          <div class="assumptions">
+            <p class="label">Assumptions:</p>
+            <ol>
+              <li>Lane markings have a long, continuous shape prior: context needed to reconstruct an occluded/faint segment lies along the continuous extent of the structure (rows/columns), not scattered arbitrarily.</li>
+              <li>Local, incremental propagation (row → next row, column → next column) is sufficient, instead of requiring every pixel to connect to every other pixel directly (as in dense MRF/CRF).</li>
+            </ol>
+            <div class="paper-figure">
+              <img src="images/scnn.png" alt="scnn algorithm">
+              <p class="caption">Figure: SCNN Algorithm [1].</p>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- TABLE SECTION -->
+    <h2>Algorithm vs Feature Comparison</h2>
+
+    <section>
+      <h3>Detection Approach</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Algorithm</th>
+              <th>Segmentation-based</th>
+              <th>Anchor/Row-wise</th>
+              <th>Parametric/Curve</th>
+              <th>Keypoint-based</th>
+              <th>Transformer-based</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>SCNN [1]</td>
+              <td class="check"></td>
+              <td class="empty"></td>
+              <td class="empty"></td>
+              <td class="empty"></td>
+              <td class="empty"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h3>Assumptions</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Algorithm</th>
+              <th>Continuous shape prior</th>
+              <th>Local/incremental propagation sufficient</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>SCNN [1]</td>
+              <td class="check"></td>
+              <td class="check"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
