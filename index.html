@@ -217,12 +217,18 @@
               connect every pixel to every other pixel directly, which is computationally very expensive.
             </p>
             <p>
-              SCNN instead slices a feature map into rows (or columns) and propagates information sequentially: convolve
-              a row (1D conv sliding along width) to produce a message, add that message residually to the next row,
-              convolve the updated row to produce the next message, and so on, which is done in 4 passes (down, up, right, left)
-              applied sequentially, one after another. This is inserted after the last hidden layer of a VGG16/LargeFOV
-              segmentation backbone, followed by a 1x1 conv to map to per-pixel class scores (background + fixed number
-              of lane slots), upsampling, and softmax to get the final per-pixel lane segmentation mask.
+              SCNN instead propagates information sequentially, one row (or column) at a time. Take the topmost 
+              row of the feature map, convolve it with a small kernel to produce a "message," and add that message 
+              onto the row directly below it. Convolve this now-updated row to produce the next message, add it to 
+              the row below that, and repeat all the way down. This single sweep is called the downward pass. The 
+              same mechanism is then repeated for three more sweeps: upward (bottom row to top), rightward (leftmost 
+              column to rightmost), and leftward, each one run one after another, so that by the end every pixel has 
+              received context propagated in from all four directions. This module is inserted after the last hidden 
+              layer of a VGG16/LargeFOV segmentation backbone, followed by a 1x1 conv mapping features to per-pixel 
+              class scores (background plus a fixed number of lane slots), bilinear upsampling to the original image 
+              resolution, and a softmax to produce the final per-pixel lane segmentation mask. This output is a dense 
+              pixel mask rather than clean lane curves, so post-processing (thresholding, sparse point sampling, and 
+              curve fitting) is still required afterward to convert the mask into continuous lane lines.
             </p>
           </div>
           <div class="assumptions">
@@ -230,6 +236,7 @@
             <ol>
               <li>Lane markings have a long, continuous shape prior: context needed to reconstruct an occluded/faint segment lies along the continuous extent of the structure (rows/columns), not scattered arbitrarily.</li>
               <li>Local, incremental propagation (row → next row, column → next column) is sufficient, instead of requiring every pixel to connect to every other pixel directly (as in dense MRF/CRF).</li>
+              <li>The predicted per-lane pixel mask is clean and separable enough that simple thresholding, sparse per-row sampling, and curve fitting can recover an accurate lane line, i.e. it assumes no major noise, gaps, or overlap between adjacent lane masks.</li>
             </ol>
             <div class="paper-figure">
               <img src="images/scnn.png" alt="scnn algorithm">
@@ -281,11 +288,13 @@
               <th>Algorithm</th>
               <th>Continuous shape prior</th>
               <th>Local/incremental propagation sufficient</th>
+              <th>Clean mask for post-processing</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>SCNN [1]</td>
+              <td class="check"></td>
               <td class="check"></td>
               <td class="check"></td>
             </tr>
