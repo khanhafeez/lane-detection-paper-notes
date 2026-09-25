@@ -289,8 +289,8 @@
           <div class="assumptions">
             <p class="label">Assumptions:</p>
             <ol>
-              <li>Every keypoint can regress an accurate offset to its lane's starting point, and different lanes' starting points land far enough apart for correct grouping by proximity.</li>
-              <li>Assigned keypoints are dense and accurate enough that simply connecting them in order gives a smooth lane line.</li>
+              <li>Different lanes' starting points are sufficiently well-separated in space that nearest-neighbor grouping does not mis-assign keypoints across lanes.</li>
+              <li>Assigned keypoints are dense and accurate, which when connected in order, gives a smooth lane line.</li>
               <li>A keypoint's feature vector (possibly with local information of nearby keypoints), carries rich information to regress an accurate offset to a starting point that may be far away.</li>
             </ol>
             <div class="paper-figure">
