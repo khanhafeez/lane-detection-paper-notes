@@ -234,13 +234,68 @@
           <div class="assumptions">
             <p class="label">Assumptions:</p>
             <ol>
-              <li>Lane markings have a long, continuous shape prior: context needed to reconstruct an occluded/faint segment lies along the continuous extent of the structure (rows/columns), not scattered arbitrarily.</li>
-              <li>Local, incremental propagation (row → next row, column → next column) is sufficient, instead of requiring every pixel to connect to every other pixel directly (as in dense MRF/CRF).</li>
-              <li>The predicted per-lane pixel mask is clean and separable enough that simple thresholding, sparse per-row sampling, and curve fitting can recover an accurate lane line, i.e. it assumes no major noise, gaps, or overlap between adjacent lane masks.</li>
+              <li>Lane markings have a long, continuous shape prior: context needed to reconstruct an occluded/faint segment lies along the lane's own extent (rows/columns), not scattered arbitrarily.</li>
+              <li>Local, incremental propagation (row → next row, column → next column) is sufficient, instead of connecting every pixel to every other pixel directly (as in dense MRF/CRF).</li>
+              <li>The predicted per-lane pixel mask is clean and separable enough that post-processing (thresholding, sparse sampling, curve fitting) can produce an accurate lane line, with no major noise, gaps, or overlap between adjacent masks.</li>
+              <li>The order of the four directional passes (down, up, right, left) matters, since each pass updates the feature map before the next one runs on it. The paper only tests adding directions one at a time; it doesn't test other orderings.</li>
             </ol>
             <div class="paper-figure">
               <img src="images/scnn.png" alt="scnn algorithm">
               <p class="caption">Figure: SCNN Algorithm [1].</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="paper-card">
+          <div class="paper-title">
+            [1] Spatial As Deep: Spatial CNN for Traffic Scene Understanding (SCNN)
+          </div>
+          <div class="paper-meta">
+            <span>AAAI 2018</span>
+            <span>Category: Segmentation-based</span>
+          </div>
+          <div class="paper-link">
+            <a href="https://arxiv.org/abs/1712.06080" target="_blank" rel="noopener noreferrer">
+              Paper link
+            </a>
+          </div>
+          <div class="paper-summary">
+            <p>
+              Anchor-based methods represent each lane as a fixed straight-line template (an anchor) placed at a preset 
+              position and angle, and the network only predicts small corrections to bend or shift that straight line 
+              into the actual lane shape. Since the starting shape is always a straight line, this struggles to fit lanes 
+              that curve a lot. Keypoint-based methods fixed this by representing lanes as sets of keypoints instead, which 
+              can trace any shape. But they group keypoints into a lane one at a time: each keypoint is linked only to its 
+              immediate neighbor. This makes post-processing slow, and if one association is wrong, the rest of that lane's 
+              points can go wrong too, since each point only looks at its neighbor and not the lane as a whole.
+            </p>
+            <p>
+              GANet addresses these limitations by proposing a method to identify keypoints that belong to the same lane, 
+              without walking neighbor-to-neighbor. Every keypoint regresses an offset, indicating how far and in which direction 
+              to move from that keypoint to reach its lane's starting point. Keypoints whose predicted starting point locations land 
+              close to each other are grouped as the same lane. The image goes through a CNN backbone, then a self-attention layer for 
+              global context, followed by an FPN that combines features across scales into one feature map. From this feature map, two 
+              branches run in parallel. One branch refines features locally through the Lane-aware Feature Aggregator (LFA) module: for 
+              each point, it regresses a few nearby points likely on the same lane, samples their features, and combines them into a richer 
+              feature, which then feeds a keypoint head that outputs a confidence map indicating where a keypoint is, and a compensation map 
+              that recovers the precise sub-pixel position lost from downsampling. The second branch takes the FPN feature map directly into 
+              an offset head, which predicts each keypoint's offset to its lane's starting point. At inference, keypoints are filtered 
+              from the confidence map, the keypoints whose predicted offset is near zero are taken as starting points, and every other 
+              keypoint is assigned to whichever starting point its offset points closest to, with all of this done in parallel. Each 
+              assigned keypoint's precise image-coordinate position is then recovered using its compensation map value, and the keypoints 
+              belonging to each lane are simply connected in order to form the final lane line.
+            </p>
+          </div>
+          <div class="assumptions">
+            <p class="label">Assumptions:</p>
+            <ol>
+              <li>Every keypoint can regress an accurate offset to its lane's starting point, and different lanes' starting points land far enough apart for correct grouping by proximity.</li>
+              <li>Assigned keypoints are dense and accurate enough that simply connecting them in order gives a smooth lane line.</li>
+              <li>A keypoint's feature vector (possibly with local information of nearby keypoints), carries rich information to regress an accurate offset to a starting point that may be far away.</li>
+            </ol>
+            <div class="paper-figure">
+              <img src="images/ganet.png" alt="ganet algorithm">
+              <p class="caption">Figure: GANet Algorithm [2].</p>
             </div>
           </div>
         </article>
@@ -274,29 +329,13 @@
               <td class="empty"></td>
               <td class="empty"></td>
             </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section>
-      <h3>Assumptions</h3>
-      <div class="table-wrapper">
-        <table>
-          <thead>
             <tr>
-              <th>Algorithm</th>
-              <th>Continuous shape prior</th>
-              <th>Local/incremental propagation sufficient</th>
-              <th>Clean mask for post-processing</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>SCNN [1]</td>
+              <td>GANet [2]</td>
+              <td class="empty"></td>
+              <td class="empty"></td>
+              <td class="empty"></td>
               <td class="check"></td>
-              <td class="check"></td>
-              <td class="check"></td>
+              <td class="empty"></td>
             </tr>
           </tbody>
         </table>
